@@ -35,11 +35,11 @@ set_seed(42)
 
 # config
 device='gpu'
-scratch=True # if you want to ignore the cache and start for scratch
-numEpochs = 2000 # number of epochs to train the GPT+PT model
-embeddingSize = 384 # the hidden dimension of the representation of both GPT and PT
-numPoints = [20,350] # number of points that we are going to receive to make a prediction about f given x and y, if you don't know then use the maximum
-numVars = 2 # the dimenstion of input points x, if you don't know then use the maximum
+scratch=True 
+numEpochs = 2000 
+embeddingSize = 384 
+numPoints = [20,350] 
+numVars = 2 
 numYs = 1 # the dimension of output points y = f(x), if you don't know then use the maximum
 blockSize = 180 # spatial extent of the model for its context
 batchSize = 256 # batch size of training data
@@ -57,19 +57,11 @@ addr = './SavedModels/' # where to save model
 n_layer = 3
 n_head = 4
 method = 'EMB_SUM' # EMB_CAT/EMB_SUM/OUT_SUM/OUT_CAT/EMB_CON -> whether to concat the embedding or use summation. 
-# EMB_CAT: Concat point embedding to GPT token+pos embedding
-# EMB_SUM: Add point embedding to GPT tokens+pos embedding
-# OUT_CAT: Concat the output of the self-attention and point embedding
-# OUT_SUM: Add the output of the self-attention and point embedding
-# EMB_CON: Conditional Embedding, add the point embedding as the first token
 variableEmbedding = 'NOT_VAR' # NOT_VAR/LEA_EMB/STR_VAR
-# NOT_VAR: Do nothing, will not pass any information from the number of variables in the equation to the GPT
-# LEA_EMB: Learnable embedding for the variables, added to the pointNET embedding
-# STR_VAR: Add the number of variables to the first token
 addVars = True if variableEmbedding == 'STR_VAR' else False
 maxNumFiles = 100 # maximum number of file to load in memory for training the neural network
 bestLoss = None # if there is any model to load as pre-trained one
-fName = '{}_SymbolicGPT_{}_{}_{}_MINIMIZE.txt'.format(dataInfo, 
+fName = '{}_DD2D_{}_{}_{}_MINIMIZE.txt'.format(dataInfo, 
                                              'layer_heads_{}_{}'.format(n_layer, n_head), 
                                              'Padding',
                                              variableEmbedding)
@@ -201,19 +193,7 @@ except KeyboardInterrupt:
 
 # load the best model
 print('The following model {} has been loaded!'.format(ckptPath))
-
-# ckptPath = '/home/sutianhao/CLIPxrd/SavedModels/XYE_2Var_20-350Points_384EmbeddingSize_SymbolicGPT_GPT_PT_EMB_SUM_Skeleton_Padding_NOT_VAR_MINIMIZE.pt'
 checkpoint = torch.load(ckptPath)
-# state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpoint
-# filtered_state_dict = {k: v for k, v in state_dict.items() if (not k.startswith('pointNet')) & (not k.startswith('vars_emb'))}
-
-# modified_state_dict = {}
-
-# for key, value in filtered_state_dict.items():
-#     # 将参数名中的 'point' 和 'points' 替换为 'pattern'
-#     new_key = key.replace('points', 'pattern').replace('point', 'pattern').replace('formula', 'crystal')
-#     modified_state_dict[new_key] = value
-
 model.load_state_dict(checkpoint)
 model = model.eval().to(trainer.device)
 
