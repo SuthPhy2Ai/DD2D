@@ -306,3 +306,7 @@ class DD2D(nn.Module):
                 F.cross_entropy(logits_per_crystal, labels)) / 2
 
         return loss, logits_per_pattern
+<<<<<<< HEAD
+=======
+
+>>>>>>> de8745369266226120f07ea03742679ab771f4bf
