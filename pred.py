@@ -27,7 +27,7 @@ from torch.nn import functional as F
 
 from utils import set_seed, pred_from_model
 from trainer import Trainer, TrainerConfig
-from DD2D import GPT, GPTConfig, PointNetConfig
+from DD2D import DD2D, TransformerConfig
 from utils import processDataFiles, CharDataset
 
 # set the random seed
@@ -172,15 +172,9 @@ print('seq:{}'.format(seq))
 
 
 # create the model
-pconf = PointNetConfig(embeddingSize=embeddingSize, 
-                       numberofPoints=numPoints,
-                       numberofVars=numVars, 
-                       numberofYs=numYs,
-                       method=method,
-                       variableEmbedding=variableEmbedding)
-mconf = GPTConfig(train_dataset.block_size,
+mconf = TransformerConfig(train_dataset.block_size,
                   n_layer=n_layer, n_head=n_head, n_embd=embeddingSize)
-model = GPT(mconf, pconf)
+model = DD2D(mconf)
     
 # initialize a trainer instance and kick off training
 tconf = TrainerConfig(max_epochs=numEpochs, batch_size=batchSize, 
