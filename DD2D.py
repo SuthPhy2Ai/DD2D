@@ -52,8 +52,8 @@ class CausalSelfAttention_masked_for_crystal(nn.Module):
         x_padding_judge = torch.unsqueeze(x_padding_judge, dim=1)
         x_padding_judge = torch.tile(x_padding_judge, [1, self.n_head, 1, 1])
 
-        if is_crystal:
-            x_padding_judge[:, :, 0, 7:] = 0.0
+        # if is_crystal:
+        #     x_padding_judge[:, :, 0, 7:] = 0.0
 
         k = self.key(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
         q = self.query(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
