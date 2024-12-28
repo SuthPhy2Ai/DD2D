@@ -26,7 +26,7 @@ def top_k_logits(logits, k):
 
 
 @torch.no_grad()
-def pred_from_model(model, x, points=None, itos=None, topN=3):
+def pred_from_model(model, x, pattern=None, itos=None, topN=3):
     """
     take a conditioning sequence of indices in x (of shape (b,t)) and predict the next token in
     the sequence, feeding the predictions back into the model each time. Clearly the sampling
@@ -34,10 +34,10 @@ def pred_from_model(model, x, points=None, itos=None, topN=3):
     of block_size, unlike an RNN that has an infinite context window.
     """
     x = x.to('cpu')
-    points = points.to('cpu')
+    pattern = pattern.to('cpu')
     model = model.to('cpu')
     model.eval()
-    _, similarity = model(x, points=points)
+    _, similarity = model(x, pattern=pattern)
     similarity = similarity.numpy()
     topN = -1 * (topN + 1)
     top3_indices = np.argsort(similarity, axis=1)[:, :topN:-1]
@@ -64,7 +64,7 @@ def pred_from_model(model, x, points=None, itos=None, topN=3):
 
 
 @torch.no_grad()
-def sample_from_model(model, x, points=None, itos=None, topN=3):
+def sample_from_model(model, x, pattern=None, itos=None, topN=3):
     """
     take a conditioning sequence of indices in x (of shape (b,t)) and predict the next token in
     the sequence, feeding the predictions back into the model each time. Clearly the sampling
@@ -72,12 +72,12 @@ def sample_from_model(model, x, points=None, itos=None, topN=3):
     of block_size, unlike an RNN that has an infinite context window.
     """
     x = x.to('cpu')
-    points = points.to('cpu')
+    pattern = pattern.to('cpu')
     model = model.to('cpu')
     model.eval()
-    # outputs = model(x, points=points)
+    # outputs = model(x, pattern=pattern)
     # print(f"Model outputs: {outputs.shape}")
-    _, similarity = model(x, points=points)
+    _, similarity = model(x, pattern=pattern)
     similarity = similarity.numpy()
     topN = -1 * (topN + 1)
     top3_indices = np.argsort(similarity, axis=1)[:, :topN:-1]
