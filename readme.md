@@ -11,6 +11,7 @@ To set up the environment for this project, you can use one of the following met
 ### Using Conda:
 ```bash
 conda env create -f environment_requests.yaml
+conda activate dd2d
 ```
 
 ### Using Pip:

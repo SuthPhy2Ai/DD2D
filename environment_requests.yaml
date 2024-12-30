@@ -1,4 +1,4 @@
-name: ctgan
+name: dd2d
 channels:
   - conda-forge
   - defaults
