@@ -50,12 +50,7 @@ titleTemplate = "{} equations of {} variables - Benchmark"
 addr = './SavedModels/' # where to save model
 n_layer = 4
 n_head = 4
-method = 'EMB_SUM' # EMB_CAT/EMB_SUM/OUT_SUM/OUT_CAT/EMB_CON -> whether to concat the embedding or use summation. 
-# EMB_CAT: Concat point embedding to GPT token+pos embedding
-# EMB_SUM: Add point embedding to GPT tokens+pos embedding
-# OUT_CAT: Concat the output of the self-attention and point embedding
-# OUT_SUM: Add the output of the self-attention and point embedding
-# EMB_CON: Conditional Embedding, add the point embedding as the first token
+method = 'EMB_SUM' # EMB_CAT/EMB_SUM/OUT_SUM/OUT_CAT/
 variableEmbedding = 'NOT_VAR' # NOT_VAR/LEA_EMB/STR_VAR
 # NOT_VAR: Do nothing, will not pass any information from the number of variables in the equation to the GPT
 # LEA_EMB: Learnable embedding for the variables, added to the pointNET embedding
@@ -80,43 +75,6 @@ if os.path.isfile(train_file) and not scratch:
     with open(train_file, 'rb') as f:
         train_dataset,trainText,chars = pickle.load(f)
 else:
-    # process training files from scratch
-
-    ##########pre-processing .dat##################
-    # path = '../imgs_train/'
-    # files = glob.glob(os.path.join(path, '*.dat'))
-    # Points = []
-    # fileID = 0
-    # template = {'X': []}
-    # for idx, file_path in enumerate(files):
-    #     structure = template.copy()
-    #     points = np.load(file_path, allow_pickle=True)
-    #     indx = np.where(points != 0.0)
-    #     values = points[indx]
-    #     result = np.zeros((3, len(indx[0])))
-    #     result[0, :] = indx[0]
-    #     result[1, :] = indx[1]
-    #     result[2, :] = np.log(values)
-    #     with open('../aimd_train.csv', 'r', newline='') as csvfile:
-    #         reader = csv.reader(csvfile)
-    #         for id_in, row in enumerate(reader):
-    #             if id_in == idx:
-    #                 structure['seq'] = row
-    #                 break
-    #     structure['X'] = result.tolist()
-    #     outputpath = './dataset/{}.json'.format(fileID)
-    #     if os.path.exists(outputpath):
-    #         fileSize = os.path.getsize(outputpath)
-    #         if fileSize > 500000000:  # 500 MB
-    #             fileID += 1
-    #     with open(outputpath, "a", encoding="utf-8") as h:
-    #         json.dump(structure, h, ensure_ascii=False)
-    #         h.write('\n')
-    #     Points.append(points)
-    ##########pre-processing .csv##################
-
-
-    ############read json######################
     path = './dataset/0.json'
     files = glob.glob(path)[:maxNumFiles]
     text = processDataFiles(files)
