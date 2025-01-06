@@ -9,17 +9,12 @@ DD2D model:
 
 """
 
-import math
-import logging
 import numpy as np
-import random
-import torch
 import torch.nn as nn
+import math, logging, torch
 from torch.nn import functional as F
 
 logger = logging.getLogger(__name__)
-
-
 
 class TransformerConfig:
     embd_pdrop = 0.1
@@ -28,8 +23,7 @@ class TransformerConfig:
 
     def __init__(self, block_size, **kwargs):
         self.block_size = block_size
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        _               = [setattr(self, i, kwargs[i]) for i in kwargs.keys()]
 
 
 class CausalSelfAttention_masked_for_crystal(nn.Module):
@@ -37,60 +31,54 @@ class CausalSelfAttention_masked_for_crystal(nn.Module):
     def __init__(self, config):
         super().__init__()
         assert config.n_embd % config.n_head == 0
-        self.key = nn.Linear(config.n_embd, config.n_embd)
-        self.query = nn.Linear(config.n_embd, config.n_embd)
-        self.value = nn.Linear(config.n_embd, config.n_embd)
-        self.attn_drop = nn.Dropout(config.attn_pdrop)
-        self.resid_drop = nn.Dropout(config.resid_pdrop)
-        self.proj = nn.Linear(config.n_embd, config.n_embd)
         self.n_head = config.n_head
+        _nnliner    = nn.Linear
+        self.key    = _nnlinear(config.n_embd, config.n_embd)
+        self.query  = _nnlinear(config.n_embd, config.n_embd)
+        self.value  = _nnlinear(config.n_embd, config.n_embd)
+        self.proj   = _nnlinear(config.n_embd, config.n_embd)
+        self.attn_drop  = nn.Dropout(config.attn_pdrop)
+        self.resid_drop = nn.Dropout(config.resid_pdrop)
 
     def forward(self, x, x_padding_judge, is_crystal=None):
-        B, T, C = x.size()
-
+        B, T, C         = x.size()
         x_padding_judge = 1.0 - x_padding_judge
         x_padding_judge = torch.unsqueeze(x_padding_judge, dim=2)
         x_padding_judge = x_padding_judge @ x_padding_judge.transpose(-2, -1)
         x_padding_judge = torch.unsqueeze(x_padding_judge, dim=1)
         x_padding_judge = torch.tile(x_padding_judge, [1, self.n_head, 1, 1])
 
-        if is_crystal:
-            x_padding_judge[:, :, 0, 7:] = 0.0
+        if is_crystal:  x_padding_judge[:, :, 0, 7:] = 0.0
 
-        k = self.key(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
+        #prepare k, q, v for attention calcs
+        k = self.key(x).view(B, T, self.n_head,   C // self.n_head).transpose(1, 2)
         q = self.query(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
         v = self.value(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
 
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att_full = torch.ones_like(att)
-        att_full = self.attn_drop(att_full)
-        x_padding_judge = x_padding_judge * att_full
-        att = att.masked_fill(x_padding_judge == 0, -1e9)
-        att = F.softmax(att, dim=-1)
-        y = att @ v
-        y = y.transpose(1, 2).contiguous().view(B, T, C)
-
-        y = self.resid_drop(self.proj(y))
-        return y
-
+        att              = (q @ k.transpose(-2, -1)) * (1.0 / np.sqrt(k.size(-1)))
+        att_full         = self.attn_drop(torch.ones_like(att))
+        x_padding_judge *= att_full
+        att              = att.masked_fill(x_padding_judge == 0, -1e9)
+        att              = F.softmax(att, dim=-1)
+        y                = att @ v
+        y                = y.transpose(1, 2).contiguous().view(B, T, C) #keep shape
+        return self.resid_drop(self.proj(y))
 
 class Transformer_encoder_block(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.ln1 = nn.LayerNorm(config.n_embd)
-        self.ln2 = nn.LayerNorm(config.n_embd)
+        self.ln1   = nn.LayerNorm(config.n_embd)
+        self.ln2   = nn.LayerNorm(config.n_embd)
         self.attn1 = CausalSelfAttention_masked_for_crystal(config)
-        self.mlp = nn.Sequential(
-            nn.Linear(config.n_embd, 4 * config.n_embd),
-            nn.GELU(),
-            nn.Linear(4 * config.n_embd, config.n_embd),
-            nn.Dropout(config.resid_pdrop),
-        )
+        self.mlp   = nn.Sequential(
+                                    nn.Linear(config.n_embd, 4 * config.n_embd),
+                                    nn.GELU(),
+                                    nn.Linear(4 * config.n_embd, config.n_embd),
+                                    nn.Dropout(config.resid_pdrop),
+                                    )
 
     def forward(self, x, x_padding_judge, is_crystal):
-        x = x + self.attn1(self.ln1(x), x_padding_judge, is_crystal)
-        x = x + self.mlp(self.ln2(x))
-        return x
+        return x + self.attn1(self.ln1(x), x_padding_judge, is_crystal) + self.mlp(self.ln2(x))
 
 
 class Transformer_pattern_encoder(nn.Module):
@@ -121,15 +109,14 @@ class PositionalEncoding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model))
+        div_term = torch.exp(torch.arange(0, d_model, 2) * -(np.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + torch.autograd.Variable(self.pe[:, :x.size(1)], requires_grad=False)
-        return x
+        return x + torch.autograd.Variable(self.pe[:, :x.size(1)], requires_grad=False)
 
 
 class pattern_emb(nn.Module):
@@ -308,7 +295,3 @@ class DD2D(nn.Module):
                 F.cross_entropy(logits_per_crystal, labels)) / 2
 
         return loss, logits_per_pattern
-<<<<<<< HEAD
-=======
-
->>>>>>> de8745369266226120f07ea03742679ab771f4bf
