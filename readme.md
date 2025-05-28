@@ -2,8 +2,8 @@
 
 ## About this Project
 
-This repository contains the code implementation of the model described in the manuscript **"Reconstructing the 2D Material Structure from Diffraction Pattern with Physical-Sensitive Deep Learning"**.
-
+This repository contains the code implementation of the model described in the manuscript **"Physics-guided deep learning strategy for 2D structure reconstruction from diffraction patterns"**.  
+[Read Our Manuscript](https://www.nature.com/articles/s42005-025-02152-8)
 ## Installation
 
 To set up the environment for this project, you can use one of the following methods:
